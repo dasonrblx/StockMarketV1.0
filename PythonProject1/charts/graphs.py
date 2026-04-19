@@ -154,7 +154,7 @@ def make_comparison_chart(
             x=1,
         ),
     )
-    
+
     fig.update_xaxes(
         **_LAYOUT["xaxis"],
         rangeselector=dict(
@@ -175,32 +175,12 @@ def make_comparison_chart(
         rangeslider=dict(visible=True, bgcolor="#0d1117", thickness=0.06),
         type="date",
     )
-    
+
     fig.update_yaxes(yaxis_config)
-    
+
     return fig
-    return fig
-     rangeslider=dict(visible=True, bgcolor="#0d1117", thickness=0.06),
-        type="date",
-    ),
-    
-    fig.update_yaxes(yaxis_config)
-    
-    return fig
-        legend=dict(
-            **_LAYOUT["legend"],
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-        ),
-    )
-    
-    fig.update_yaxes(yaxis_config)
-    
-    return fig
-    
+
+
 # ── 2. Candlestick chart ──────────────────────────────────────────────────────
 
 def make_candlestick_chart(
