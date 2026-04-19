@@ -140,14 +140,7 @@ def make_comparison_chart(
         title=dict(text="Multi-Stock Comparison", font=dict(size=16)),
         xaxis_title="Time",
         yaxis_title=y_title,
-        yaxis=dict(
-            gridcolor="#21262d",
-            linecolor="#30363d",
-            showspikes=True,
-            spikecolor="#444c56",
-            spikedash="dot",
-            spikethickness=1,
-            range=y_range,
+        yaxis=dict(**_LAYOUT["yaxis"], range=y_range),
         hovermode="x unified",
         xaxis=dict(
             **_LAYOUT["xaxis"],
