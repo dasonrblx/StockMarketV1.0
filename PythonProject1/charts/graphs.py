@@ -138,8 +138,8 @@ def make_comparison_chart(
     yaxis_config = dict(**_LAYOUT["yaxis"])
     if y_range is not None:
         yaxis_config["range"] = y_range
-        
-        fig.update_layout(
+
+    fig.update_layout(
         **_LAYOUT,
         title=dict(text="Multi-Stock Comparison", font=dict(size=16)),
         xaxis_title="Time",
@@ -178,6 +178,7 @@ def make_comparison_chart(
     
     fig.update_yaxes(yaxis_config)
     
+    return fig
     return fig
      rangeslider=dict(visible=True, bgcolor="#0d1117", thickness=0.06),
         type="date",
