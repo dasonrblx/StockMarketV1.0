@@ -138,13 +138,12 @@ def make_comparison_chart(
     yaxis_config = dict(**_LAYOUT["yaxis"])
     if y_range is not None:
         yaxis_config["range"] = y_range
-
+        
     fig.update_layout(
         **_LAYOUT,
         title=dict(text="Multi-Stock Comparison", font=dict(size=16)),
         xaxis_title="Time",
         yaxis_title=y_title,
-        yaxis=yaxis_config,
         hovermode="x unified",
         xaxis=dict(
             **_LAYOUT["xaxis"],
@@ -175,6 +174,9 @@ def make_comparison_chart(
             x=1,
         ),
     )
+    
+    fig.update_yaxes(yaxis_config)
+    
     return fig
     
 # ── 2. Candlestick chart ──────────────────────────────────────────────────────
