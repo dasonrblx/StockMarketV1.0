@@ -1,7 +1,7 @@
 import time
 import streamlit as st
 
-from config.settings import STOCKS, SECTORS, REFRESH_RATE, TIME_RANGES
+from config.settings import STOCKS, SECTORS, REFRESH_RATE, TIME_RANGES, TICKER_NAMES
 from auth.login import login
 from data.fetcher import get_stock_data, get_history
 from data.processor import add_technical_indicators
@@ -11,6 +11,15 @@ from charts.graphs import (
     make_rsi_chart,
     make_heatmap,
 )
+
+# ═════════════════════════════════════════════════════════════════════════════
+# HELPERS
+# ═════════════════════════════════════════════════════════════════════════════
+def label(ticker: str) -> str:
+    """Return 'Full Name (TICK)' for display, falling back to the ticker alone."""
+    name = TICKER_NAMES.get(ticker)
+    return f"{name} ({ticker})" if name else ticker
+
 
 # ═════════════════════════════════════════════════════════════════════════════
 # PAGE CONFIG
@@ -31,18 +40,15 @@ st.markdown("""
 
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color: #080c10; }
 
-/* Hide Streamlit chrome completely */
 #MainMenu { visibility: hidden; }
 footer    { visibility: hidden; }
 header    { visibility: hidden; }
 
-/* Hide Streamlit's own collapse controls — we use our own */
 [data-testid="stSidebarCollapseButton"] { display: none !important; }
 [data-testid="collapsedControl"]        { display: none !important; }
 
 .block-container { padding: 2rem 2.5rem !important; }
 
-/* ── Sidebar shell ── */
 [data-testid="stSidebar"] {
     background: #0b0f14 !important;
     border-right: 1px solid #1a2030 !important;
@@ -50,7 +56,6 @@ header    { visibility: hidden; }
 }
 [data-testid="stSidebar"] > div:first-child { padding: 0 !important; }
 
-/* ── Custom arrow toggle tab ── */
 #sb-toggle {
     position: fixed;
     top: 50%;
@@ -68,20 +73,10 @@ header    { visibility: hidden; }
     justify-content: center;
     transition: left 0.25s ease, background 0.15s, border-color 0.15s;
 }
-#sb-toggle:hover {
-    background: #111827;
-    border-color: #2d3f57;
-}
-#sb-toggle svg {
-    transition: transform 0.25s ease;
-    flex-shrink: 0;
-}
-/* Arrow flips to point right when sidebar is closed */
-#sb-toggle.collapsed svg {
-    transform: rotate(180deg);
-}
+#sb-toggle:hover { background: #111827; border-color: #2d3f57; }
+#sb-toggle svg   { transition: transform 0.25s ease; flex-shrink: 0; }
+#sb-toggle.collapsed svg { transform: rotate(180deg); }
 
-/* ── User badge ── */
 .sb-user {
     display: flex; align-items: center; gap: 10px;
     padding: 22px 20px 18px; border-bottom: 1px solid #1a2030; margin-bottom: 6px;
@@ -95,14 +90,12 @@ header    { visibility: hidden; }
 .sb-name { font-size: 0.85rem; font-weight: 600; color: #e2e8f0; }
 .sb-role { font-size: 0.68rem; color: #4a5568; letter-spacing: 0.05em; text-transform: uppercase; }
 
-/* ── Sidebar section labels ── */
 .sb-label {
     font-size: 0.62rem; font-weight: 600; letter-spacing: 0.12em;
     text-transform: uppercase; color: #2d3748; padding: 14px 20px 6px;
 }
 .sb-div { border: none; border-top: 1px solid #1a2030; margin: 10px 0; }
 
-/* ── Sidebar widgets ── */
 [data-testid="stSidebar"] [data-testid="stSelectbox"],
 [data-testid="stSidebar"] [data-testid="stMultiSelect"] { padding: 0 20px; }
 
@@ -117,7 +110,6 @@ header    { visibility: hidden; }
     font-size: 0.78rem !important; color: #64748b !important; font-weight: 500 !important;
 }
 
-/* ── Sign-out button ── */
 [data-testid="stSidebar"] [data-testid="stButton"] button {
     background: transparent !important; border: 1px solid #1e2d3d !important;
     color: #4a5568 !important; border-radius: 8px !important;
@@ -130,7 +122,6 @@ header    { visibility: hidden; }
     background: rgba(248,81,73,0.06) !important;
 }
 
-/* ── Ticker cards ── */
 .ticker-card {
     background: #0d1520; border: 1px solid #1a2030; border-radius: 14px;
     padding: 18px 20px 14px; position: relative; overflow: hidden;
@@ -145,7 +136,11 @@ header    { visibility: hidden; }
 
 .tc-symbol {
     font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em;
-    color: #4a5568; text-transform: uppercase; margin-bottom: 6px;
+    color: #4a5568; text-transform: uppercase; margin-bottom: 2px;
+}
+.tc-name {
+    font-size: 0.78rem; font-weight: 600; color: #94a3b8; margin-bottom: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .tc-price {
     font-family: 'JetBrains Mono', monospace; font-size: 1.55rem;
@@ -161,7 +156,6 @@ header    { visibility: hidden; }
 }
 .tc-meta span { color: #4a5568; }
 
-/* ── Tabs ── */
 [data-testid="stTabs"] [data-baseweb="tab-list"] {
     background: transparent !important; border-bottom: 1px solid #1a2030 !important;
     gap: 0 !important; padding: 0 !important;
@@ -181,7 +175,6 @@ header    { visibility: hidden; }
 }
 [data-testid="stTabs"] [data-baseweb="tab-panel"] { padding-top: 20px !important; }
 
-/* ── Misc overrides ── */
 .stAlert { border-radius: 10px !important; font-size: 0.8rem !important; }
 [data-testid="stDataFrame"] { border-radius: 10px !important; overflow: hidden; }
 [data-testid="stMarkdownContainer"] hr { border-color: #1a2030 !important; margin: 10px 0 !important; }
@@ -200,7 +193,7 @@ header    { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Sidebar toggle — arrow tab pinned to the sidebar's right edge ─────────────
+# ── Sidebar toggle ─────────────────────────────────────────────────────────────
 st.markdown("""
 <div id="sb-toggle" title="Toggle sidebar">
     <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -208,22 +201,18 @@ st.markdown("""
               stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
 </div>
-
 <script>
 (function () {
     function init() {
         const doc    = window.parent.document;
         const toggle = document.getElementById('sb-toggle');
         if (!toggle) return;
-
         const sidebar = doc.querySelector('[data-testid="stSidebar"]');
         if (!sidebar) { setTimeout(init, 100); return; }
 
         let collapsed = false;
 
-        function getWidth() {
-            return sidebar.getBoundingClientRect().width || 244;
-        }
+        function getWidth() { return sidebar.getBoundingClientRect().width || 244; }
 
         function applyState(animate) {
             const w = getWidth();
@@ -231,37 +220,24 @@ st.markdown("""
             toggle.style.transition  = animate
                 ? 'left 0.25s ease, background 0.15s, border-color 0.15s'
                 : 'background 0.15s, border-color 0.15s';
-
             if (collapsed) {
-                sidebar.style.transform  = 'translateX(-' + w + 'px)';
+                sidebar.style.transform   = 'translateX(-' + w + 'px)';
                 sidebar.style.marginRight = '-' + w + 'px';
                 toggle.style.left = '0px';
                 toggle.classList.add('collapsed');
             } else {
-                sidebar.style.transform  = 'translateX(0)';
+                sidebar.style.transform   = 'translateX(0)';
                 sidebar.style.marginRight = '0';
                 toggle.style.left = (w - 1) + 'px';
                 toggle.classList.remove('collapsed');
             }
         }
 
-        toggle.addEventListener('click', function () {
-            collapsed = !collapsed;
-            applyState(true);
-        });
-
-        // Set initial position without animation
+        toggle.addEventListener('click', function () { collapsed = !collapsed; applyState(true); });
         applyState(false);
-
-        // Keep toggle aligned on resize
-        window.addEventListener('resize', function () {
-            if (!collapsed) applyState(false);
-        });
+        window.addEventListener('resize', function () { if (!collapsed) applyState(false); });
     }
-
-    if (window.parent && window.parent.document) {
-        setTimeout(init, 350);
-    }
+    if (window.parent && window.parent.document) { setTimeout(init, 350); }
 })();
 </script>
 """, unsafe_allow_html=True)
@@ -300,9 +276,17 @@ with st.sidebar:
                           label_visibility="collapsed")
     pool = STOCKS if sector == "All Sectors" else SECTORS[sector]
 
+    # Build label→ticker lookup for the multiselect
+    pool_labels   = [label(t) for t in pool]
+    default_labels = [label(t) for t in pool[:3]]
+
     st.markdown('<div class="sb-label">Watchlist</div>', unsafe_allow_html=True)
-    selected_stocks = st.multiselect("watchlist", pool, default=pool[:3],
+    selected_labels = st.multiselect("watchlist", pool_labels, default=default_labels,
                                      label_visibility="collapsed")
+
+    # Reverse map: "Full Name (TICK)" → "TICK"
+    label_to_ticker = {label(t): t for t in pool}
+    selected_stocks = [label_to_ticker[lbl] for lbl in selected_labels]
 
     st.markdown('<div class="sb-label">Time Range</div>', unsafe_allow_html=True)
     time_label = st.selectbox("timerange", list(TIME_RANGES.keys()),
@@ -376,12 +360,14 @@ if not df_snapshot.empty:
         chunk = df_snapshot.iloc[chunk_start : chunk_start + 6]
         cols  = st.columns(len(chunk))
         for col, (_, row) in zip(cols, chunk.iterrows()):
-            up   = row["Change"] >= 0
-            sign = "+" if up else ""
+            up        = row["Change"] >= 0
+            sign      = "+" if up else ""
+            full_name = TICKER_NAMES.get(row["Ticker"], "")
             with col:
                 st.markdown(f"""
                 <div class="ticker-card {'up' if up else 'down'}">
                     <div class="tc-symbol">{row['Ticker']}</div>
+                    <div class="tc-name">{full_name}</div>
                     <div class="tc-price">${row['Price']:,.2f}</div>
                     <div class="tc-change {'up' if up else 'down'}">
                         {'▲' if up else '▼'} {sign}{row['Change']:.2f}
@@ -424,8 +410,11 @@ with tab_candle:
     if not histories:
         st.warning("No data available.")
     else:
-        pick = st.selectbox("Ticker", list(histories.keys()),
-                            key="candle_pick", label_visibility="collapsed")
+        # Show full names in the picker, keep tickers as keys internally
+        candle_options = {label(t): t for t in histories}
+        pick_label = st.selectbox("Ticker", list(candle_options.keys()),
+                                  key="candle_pick", label_visibility="collapsed")
+        pick    = candle_options[pick_label]
         df_pick = histories.get(pick)
 
         if df_pick is not None and not df_pick.empty:
@@ -457,6 +446,8 @@ with tab_heatmap:
 with tab_table:
     if not df_snapshot.empty:
         display = df_snapshot.copy()
+        display.insert(1, "Name", display["Ticker"].map(
+            lambda t: TICKER_NAMES.get(t, "")))
         display["Change %"] = display["Change %"].map(lambda x: f"{x:+.2f}%")
         display["Change"]   = display["Change"].map(lambda x: f"{x:+.2f}")
         display["Volume"]   = display["Volume"].map(lambda x: f"{x:,}")
