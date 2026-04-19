@@ -36,25 +36,50 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color:
 footer    { visibility: hidden; }
 header    { visibility: hidden; }
 
-/* ── Sidebar — always visible, never collapsible ── */
+/* Hide Streamlit's own collapse controls — we use our own */
 [data-testid="stSidebarCollapseButton"] { display: none !important; }
 [data-testid="collapsedControl"]        { display: none !important; }
 
+.block-container { padding: 2rem 2.5rem !important; }
+
+/* ── Sidebar shell ── */
 [data-testid="stSidebar"] {
-    transform: none !important;
-    visibility: visible !important;
-    display: block !important;
-    min-width: 244px !important;
     background: #0b0f14 !important;
     border-right: 1px solid #1a2030 !important;
-}
-[data-testid="stSidebar"][aria-expanded="false"] {
-    display: block !important;
-    transform: translateX(0) !important;
+    transition: transform 0.25s ease !important;
 }
 [data-testid="stSidebar"] > div:first-child { padding: 0 !important; }
 
-.block-container { padding: 2rem 2.5rem !important; }
+/* ── Custom arrow toggle tab ── */
+#sb-toggle {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 99999;
+    width: 18px;
+    height: 52px;
+    background: #0b0f14;
+    border: 1px solid #1a2030;
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: left 0.25s ease, background 0.15s, border-color 0.15s;
+}
+#sb-toggle:hover {
+    background: #111827;
+    border-color: #2d3f57;
+}
+#sb-toggle svg {
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+}
+/* Arrow flips to point right when sidebar is closed */
+#sb-toggle.collapsed svg {
+    transform: rotate(180deg);
+}
 
 /* ── User badge ── */
 .sb-user {
@@ -173,6 +198,72 @@ header    { visibility: hidden; }
     font-size: 0.68rem !important;
 }
 </style>
+""", unsafe_allow_html=True)
+
+# ── Sidebar toggle — arrow tab pinned to the sidebar's right edge ─────────────
+st.markdown("""
+<div id="sb-toggle" title="Toggle sidebar">
+    <svg width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6.5 1L1.5 7L6.5 13" stroke="#4a5568" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+</div>
+
+<script>
+(function () {
+    function init() {
+        const doc    = window.parent.document;
+        const toggle = document.getElementById('sb-toggle');
+        if (!toggle) return;
+
+        const sidebar = doc.querySelector('[data-testid="stSidebar"]');
+        if (!sidebar) { setTimeout(init, 100); return; }
+
+        let collapsed = false;
+
+        function getWidth() {
+            return sidebar.getBoundingClientRect().width || 244;
+        }
+
+        function applyState(animate) {
+            const w = getWidth();
+            sidebar.style.transition = animate ? 'transform 0.25s ease' : 'none';
+            toggle.style.transition  = animate
+                ? 'left 0.25s ease, background 0.15s, border-color 0.15s'
+                : 'background 0.15s, border-color 0.15s';
+
+            if (collapsed) {
+                sidebar.style.transform  = 'translateX(-' + w + 'px)';
+                sidebar.style.marginRight = '-' + w + 'px';
+                toggle.style.left = '0px';
+                toggle.classList.add('collapsed');
+            } else {
+                sidebar.style.transform  = 'translateX(0)';
+                sidebar.style.marginRight = '0';
+                toggle.style.left = (w - 1) + 'px';
+                toggle.classList.remove('collapsed');
+            }
+        }
+
+        toggle.addEventListener('click', function () {
+            collapsed = !collapsed;
+            applyState(true);
+        });
+
+        // Set initial position without animation
+        applyState(false);
+
+        // Keep toggle aligned on resize
+        window.addEventListener('resize', function () {
+            if (!collapsed) applyState(false);
+        });
+    }
+
+    if (window.parent && window.parent.document) {
+        setTimeout(init, 350);
+    }
+})();
+</script>
 """, unsafe_allow_html=True)
 
 
