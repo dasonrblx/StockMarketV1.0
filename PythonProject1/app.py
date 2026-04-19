@@ -30,8 +30,15 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color: #080c10; }
-#MainMenu, footer, header   { visibility: hidden; }
-.block-container            { padding: 2rem 2.5rem !important; }
+
+/* Hide Streamlit chrome but keep the sidebar toggle button visible */
+#MainMenu                         { visibility: hidden; }
+footer                            { visibility: hidden; }
+header                            { visibility: hidden; }
+[data-testid="collapsedControl"]  { visibility: visible !important; display: flex !important; }
+[data-testid="stSidebarCollapseButton"] { visibility: visible !important; display: flex !important; }
+
+.block-container { padding: 2rem 2.5rem !important; }
 
 /* ── Sidebar shell ── */
 [data-testid="stSidebar"] {
