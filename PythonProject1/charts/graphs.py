@@ -110,8 +110,7 @@ def make_comparison_chart(
             y = (close / close.iloc[0] * 100) if normalised else close
             all_y.append(y)
 
-            colour      = color_map.get(ticker, "#8b949e")
-            fill_colour = colour + "26"
+                colour      = color_map.get(ticker, "#8b949e")
             x           = _safe_index(df)
 
             fig.add_trace(go.Scatter(
@@ -121,6 +120,7 @@ def make_comparison_chart(
                 name=ticker,
                 line=dict(color=colour, width=2),
                 fill="tozeroy",
+                fill_colour = colour + "1a",
                 fillcolor=fill_colour,
                 hovertemplate=(
                     f"<b>{ticker}</b><br>"
