@@ -133,7 +133,6 @@ def make_comparison_chart(
             continue
 
     y_range = _axis_range_with_padding(pd.concat(all_y).dropna()) if all_y else None
-       y_range = _axis_range_with_padding(pd.concat(all_y).dropna()) if all_y else None
     y_title = "Rebased (base = 100)" if normalised else "Price (USD)"
 
     yaxis_config = dict(**_LAYOUT["yaxis"])
@@ -177,7 +176,7 @@ def make_comparison_chart(
         ),
     )
     return fig
-
+    
 # ── 2. Candlestick chart ──────────────────────────────────────────────────────
 
 def make_candlestick_chart(
