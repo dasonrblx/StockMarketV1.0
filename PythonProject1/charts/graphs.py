@@ -130,15 +130,13 @@ def make_comparison_chart(
                 ),
             ))
         except Exception:
-            continue
+            continue   
+            y_range = _axis_range_with_padding(pd.concat(all_y).dropna()) if all_y else None
+            y_title = "Rebased (base = 100)" if normalised else "Price (USD)"
 
-           
-        y_range = _axis_range_with_padding(pd.concat(all_y).dropna()) if all_y else None
-        y_title = "Rebased (base = 100)" if normalised else "Price (USD)"
-
-        yaxis_config = dict(**_LAYOUT["yaxis"])
-    if y_range is not None:
-        yaxis_config["range"] = y_range
+            yaxis_config = dict(**_LAYOUT["yaxis"])
+        if y_range is not None:
+            yaxis_config["range"] = y_range
 
     fig.update_layout(
         **_LAYOUT,
