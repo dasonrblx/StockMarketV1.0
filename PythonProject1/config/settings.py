@@ -24,6 +24,7 @@ SECTORS = {
     "Consumer":    [
         "WMT",  "HD",   "MCD",  "SBUX", "NKE", "TGT", "COST", "LOW", "TJX", "BKNG",
         "PG",   "KO",   "PEP",  "PM",   "MO",  "CL",  "GIS",  "K",   "CPB", "HSY", "UL",
+        "UNILEVER.NG",
     ],
     "Industrials": [
         "BA", "CAT", "GE", "HON", "LMT", "RTX", "UPS", "FDX", "DE", "MMM",
