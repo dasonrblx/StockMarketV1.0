@@ -172,29 +172,6 @@ header    { visibility: hidden; }
 }
 [data-testid="stTabs"] [data-baseweb="tab-panel"] { padding-top: 20px !important; }
 
-/* ── Sidebar toggle button ── */
-div[data-testid="stSidebar"] {
-    transition: all 0.3s ease !important;
-}
-button[kind="secondary"]:has(+ *) { border: none; }
-[data-testid="stButton"]:has(button[key="sb_toggle"]) button,
-button#sb_toggle {
-    background: transparent !important;
-    border: 1px solid #1a2030 !important;
-    border-radius: 8px !important;
-    color: #58a6ff !important;
-    font-size: 1rem !important;
-    padding: 6px 10px !important;
-    width: 38px !important;
-    height: 38px !important;
-    margin-top: 6px !important;
-    transition: all 0.2s !important;
-}
-[data-testid="stButton"]:has(button[key="sb_toggle"]) button:hover {
-    background: rgba(88,166,255,0.08) !important;
-    border-color: #58a6ff !important;
-}
-
 /* ── Misc overrides ── */
 .stAlert { border-radius: 10px !important; font-size: 0.8rem !important; }
 [data-testid="stDataFrame"] { border-radius: 10px !important; overflow: hidden; }
@@ -292,27 +269,8 @@ if not selected_stocks:
 # ═════════════════════════════════════════════════════════════════════════════
 # HEADER
 # ═════════════════════════════════════════════════════════════════════════════
-# ── Sidebar toggle button ─────────────────────────────────────────────────────
-if "sidebar_open" not in st.session_state:
-    st.session_state.sidebar_open = True
-
-col_title, col_btn = st.columns([11, 1])
-with col_title:
-    st.markdown('<div class="dash-title">📈 Market Dashboard</div>', unsafe_allow_html=True)
-with col_btn:
-    btn_label = "✕" if st.session_state.sidebar_open else "☰"
-    st.markdown(f"""
-    <style>
-    div[data-testid="stSidebar"] {{
-        display: {'block' if st.session_state.sidebar_open else 'none'} !important;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-    if st.button(btn_label, key="sb_toggle", help="Toggle sidebar"):
-        st.session_state.sidebar_open = not st.session_state.sidebar_open
-        st.rerun()
-
-timestamp_slot = st.empty()
+st.markdown('<div class="dash-title">📈 Market Dashboard</div>', unsafe_allow_html=True)
+timestamp_slot = st.empty()   # filled at the bottom once everything is loaded
 
 
 # ═════════════════════════════════════════════════════════════════════════════
