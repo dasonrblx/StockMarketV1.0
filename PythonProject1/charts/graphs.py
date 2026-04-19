@@ -179,7 +179,7 @@ def make_comparison_chart(
     fig.update_yaxes(yaxis_config)
     
     return fig
-        rangeslider=dict(visible=True, bgcolor="#0d1117", thickness=0.06),
+     rangeslider=dict(visible=True, bgcolor="#0d1117", thickness=0.06),
         type="date",
     ),
     
