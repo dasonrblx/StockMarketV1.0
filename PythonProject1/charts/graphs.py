@@ -145,26 +145,46 @@ def make_comparison_chart(
         xaxis_title="Time",
         yaxis_title=y_title,
         hovermode="x unified",
-        xaxis=dict(
-            **_LAYOUT["xaxis"],
-            rangeselector=dict(
-                buttons=[
-                    dict(count=1,  label="1D",  step="day",   stepmode="backward"),
-                    dict(count=5,  label="5D",  step="day",   stepmode="backward"),
-                    dict(count=1,  label="1M",  step="month", stepmode="backward"),
-                    dict(count=3,  label="3M",  step="month", stepmode="backward"),
-                    dict(count=6,  label="6M",  step="month", stepmode="backward"),
-                    dict(count=1,  label="1Y",  step="year",  stepmode="backward"),
-                    dict(step="all", label="All"),
-                ],
-                bgcolor="#161b22",
-                activecolor="#388bfd",
-                bordercolor="#30363d",
-                font=dict(color="#c9d1d9", size=11),
-            ),
-            rangeslider=dict(visible=True, bgcolor="#0d1117", thickness=0.06),
-            type="date",
+            fig.update_layout(
+        **_LAYOUT,
+        title=dict(text="Multi-Stock Comparison", font=dict(size=16)),
+        xaxis_title="Time",
+        yaxis_title=y_title,
+        hovermode="x unified",
+        legend=dict(
+            **_LAYOUT["legend"],
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1,
         ),
+    )
+    
+    fig.update_xaxes(
+        **_LAYOUT["xaxis"],
+        rangeselector=dict(
+            buttons=[
+                dict(count=1,  label="1D",  step="day",   stepmode="backward"),
+                dict(count=5,  label="5D",  step="day",   stepmode="backward"),
+                dict(count=1,  label="1M",  step="month", stepmode="backward"),
+                dict(count=3,  label="3M",  step="month", stepmode="backward"),
+                dict(count=6,  label="6M",  step="month", stepmode="backward"),
+                dict(count=1,  label="1Y",  step="year",  stepmode="backward"),
+                dict(step="all", label="All"),
+            ],
+            bgcolor="#161b22",
+            activecolor="#388bfd",
+            bordercolor="#30363d",
+            font=dict(color="#c9d1d9", size=11),
+        ),
+        rangeslider=dict(visible=True, bgcolor="#0d1117", thickness=0.06),
+        type="date",
+    )
+    
+    fig.update_yaxes(yaxis_config)
+    
+    return fig
         legend=dict(
             **_LAYOUT["legend"],
             orientation="h",
