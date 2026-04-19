@@ -1,70 +1,16 @@
 import time
 import streamlit as st
 
-# ── DEBUG HELPER ─────────────────────────────────────────────────────────────
-import traceback
-
-def dbg(label: str, value=None, level: str = "info"):
-    """Emit a coloured debug line in the Streamlit UI."""
-    colors = {"info": "#58a6ff", "ok": "#3fb950", "warn": "#d29922", "err": "#f85149"}
-    icon   = {"info": "ℹ️", "ok": "✅", "warn": "⚠️", "err": "❌"}
-    color  = colors.get(level, "#ccc")
-    ic     = icon.get(level, "•")
-    msg    = f"{ic} **[DEBUG] {label}**"
-    if value is not None:
-        msg += f"  →  `{value}`"
-    st.markdown(
-        f'<div style="font-size:0.72rem;color:{color};'
-        f'font-family:JetBrains Mono,monospace;padding:2px 0">{msg}</div>',
-        unsafe_allow_html=True,
-    )
-
-# ─────────────────────────────────────────────────────────────────────────────
-
-try:
-    from config.settings import STOCKS, SECTORS, REFRESH_RATE, TIME_RANGES
-    # Verify the imports look sane
-    assert isinstance(STOCKS, list),       "STOCKS is not a list"
-    assert isinstance(SECTORS, dict),      "SECTORS is not a dict"
-    assert isinstance(TIME_RANGES, dict),  "TIME_RANGES is not a dict"
-    assert isinstance(REFRESH_RATE, int),  "REFRESH_RATE is not an int"
-except Exception as e:
-    st.error(f"❌ **config.settings import failed:** `{e}`")
-    st.code(traceback.format_exc())
-    st.stop()
-
-try:
-    from auth.login import login
-except Exception as e:
-    st.error(f"❌ **auth.login import failed:** `{e}`")
-    st.code(traceback.format_exc())
-    st.stop()
-
-try:
-    from data.fetcher import get_stock_data, get_history
-except Exception as e:
-    st.error(f"❌ **data.fetcher import failed:** `{e}`")
-    st.code(traceback.format_exc())
-    st.stop()
-
-try:
-    from data.processor import add_technical_indicators
-except Exception as e:
-    st.error(f"❌ **data.processor import failed:** `{e}`")
-    st.code(traceback.format_exc())
-    st.stop()
-
-try:
-    from charts.graphs import (
-        make_comparison_chart,
-        make_candlestick_chart,
-        make_rsi_chart,
-        make_heatmap,
-    )
-except Exception as e:
-    st.error(f"❌ **charts.graphs import failed:** `{e}`")
-    st.code(traceback.format_exc())
-    st.stop()
+from config.settings import STOCKS, SECTORS, REFRESH_RATE, TIME_RANGES
+from auth.login import login
+from data.fetcher import get_stock_data, get_history
+from data.processor import add_technical_indicators
+from charts.graphs import (
+    make_comparison_chart,
+    make_candlestick_chart,
+    make_rsi_chart,
+    make_heatmap,
+)
 
 # ═════════════════════════════════════════════════════════════════════════════
 # PAGE CONFIG
@@ -85,21 +31,32 @@ st.markdown("""
 
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color: #080c10; }
 
+/* Hide Streamlit chrome completely */
 #MainMenu { visibility: hidden; }
 footer    { visibility: hidden; }
 header    { visibility: hidden; }
 
+/* ── Sidebar — always visible, never collapsible ── */
 [data-testid="stSidebarCollapseButton"] { display: none !important; }
 [data-testid="collapsedControl"]        { display: none !important; }
 
-.block-container { padding: 2rem 2.5rem !important; }
-
 [data-testid="stSidebar"] {
+    transform: none !important;
+    visibility: visible !important;
+    display: block !important;
+    min-width: 244px !important;
     background: #0b0f14 !important;
     border-right: 1px solid #1a2030 !important;
 }
+[data-testid="stSidebar"][aria-expanded="false"] {
+    display: block !important;
+    transform: translateX(0) !important;
+}
 [data-testid="stSidebar"] > div:first-child { padding: 0 !important; }
 
+.block-container { padding: 2rem 2.5rem !important; }
+
+/* ── User badge ── */
 .sb-user {
     display: flex; align-items: center; gap: 10px;
     padding: 22px 20px 18px; border-bottom: 1px solid #1a2030; margin-bottom: 6px;
@@ -113,12 +70,14 @@ header    { visibility: hidden; }
 .sb-name { font-size: 0.85rem; font-weight: 600; color: #e2e8f0; }
 .sb-role { font-size: 0.68rem; color: #4a5568; letter-spacing: 0.05em; text-transform: uppercase; }
 
+/* ── Sidebar section labels ── */
 .sb-label {
     font-size: 0.62rem; font-weight: 600; letter-spacing: 0.12em;
     text-transform: uppercase; color: #2d3748; padding: 14px 20px 6px;
 }
 .sb-div { border: none; border-top: 1px solid #1a2030; margin: 10px 0; }
 
+/* ── Sidebar widgets ── */
 [data-testid="stSidebar"] [data-testid="stSelectbox"],
 [data-testid="stSidebar"] [data-testid="stMultiSelect"] { padding: 0 20px; }
 
@@ -133,6 +92,7 @@ header    { visibility: hidden; }
     font-size: 0.78rem !important; color: #64748b !important; font-weight: 500 !important;
 }
 
+/* ── Sign-out button ── */
 [data-testid="stSidebar"] [data-testid="stButton"] button {
     background: transparent !important; border: 1px solid #1e2d3d !important;
     color: #4a5568 !important; border-radius: 8px !important;
@@ -145,6 +105,7 @@ header    { visibility: hidden; }
     background: rgba(248,81,73,0.06) !important;
 }
 
+/* ── Ticker cards ── */
 .ticker-card {
     background: #0d1520; border: 1px solid #1a2030; border-radius: 14px;
     padding: 18px 20px 14px; position: relative; overflow: hidden;
@@ -175,6 +136,7 @@ header    { visibility: hidden; }
 }
 .tc-meta span { color: #4a5568; }
 
+/* ── Tabs ── */
 [data-testid="stTabs"] [data-baseweb="tab-list"] {
     background: transparent !important; border-bottom: 1px solid #1a2030 !important;
     gap: 0 !important; padding: 0 !important;
@@ -194,6 +156,7 @@ header    { visibility: hidden; }
 }
 [data-testid="stTabs"] [data-baseweb="tab-panel"] { padding-top: 20px !important; }
 
+/* ── Misc overrides ── */
 .stAlert { border-radius: 10px !important; font-size: 0.8rem !important; }
 [data-testid="stDataFrame"] { border-radius: 10px !important; overflow: hidden; }
 [data-testid="stMarkdownContainer"] hr { border-color: #1a2030 !important; margin: 10px 0 !important; }
@@ -219,19 +182,11 @@ header    { visibility: hidden; }
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-dbg("session_state.logged_in", st.session_state.logged_in)
-
 if not st.session_state.logged_in:
-    dbg("Auth gate reached — calling login()", level="warn")
-    try:
-        login()
-    except Exception as e:
-        st.error(f"❌ **login() raised an exception:** `{e}`")
-        st.code(traceback.format_exc())
+    login()
     st.stop()
 
 username = st.session_state.get("username", "Trader")
-dbg("username resolved", username, level="ok")
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -239,100 +194,40 @@ dbg("username resolved", username, level="ok")
 # ═════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
 
-    # ── 1. Avatar/user badge ──────────────────────────────────────────────────
-    dbg("Rendering user badge", username)
-    try:
-        st.markdown(f"""
-        <div class="sb-user">
-            <div class="sb-avatar">{username[0].upper()}</div>
-            <div>
-                <div class="sb-name">{username}</div>
-                <div class="sb-role">Trader</div>
-            </div>
+    st.markdown(f"""
+    <div class="sb-user">
+        <div class="sb-avatar">{username[0].upper()}</div>
+        <div>
+            <div class="sb-name">{username}</div>
+            <div class="sb-role">Trader</div>
         </div>
-        """, unsafe_allow_html=True)
-        dbg("User badge rendered", level="ok")
-    except Exception as e:
-        dbg(f"User badge FAILED: {e}", level="err")
+    </div>
+    """, unsafe_allow_html=True)
 
-    # ── 2. Sector selectbox ───────────────────────────────────────────────────
-    dbg("SECTORS keys", list(SECTORS.keys()))
     st.markdown('<div class="sb-label">Sector</div>', unsafe_allow_html=True)
-    try:
-        sector = st.selectbox(
-            "sector",
-            ["All Sectors"] + list(SECTORS.keys()),
-            label_visibility="collapsed",
-        )
-        dbg("sector selected", sector, level="ok")
-    except Exception as e:
-        dbg(f"Sector selectbox FAILED: {e}", level="err")
-        st.code(traceback.format_exc())
-        sector = "All Sectors"
-
+    sector = st.selectbox("sector", ["All Sectors"] + list(SECTORS.keys()),
+                          label_visibility="collapsed")
     pool = STOCKS if sector == "All Sectors" else SECTORS[sector]
-    dbg("pool size", len(pool))
 
-    # ── 3. Watchlist multiselect ──────────────────────────────────────────────
     st.markdown('<div class="sb-label">Watchlist</div>', unsafe_allow_html=True)
-    dbg("pool[:3] default", pool[:3])
-    try:
-        selected_stocks = st.multiselect(
-            "watchlist",
-            pool,
-            default=pool[:3],
-            label_visibility="collapsed",
-        )
-        dbg("selected_stocks", selected_stocks, level="ok")
-    except Exception as e:
-        dbg(f"Watchlist multiselect FAILED: {e}", level="err")
-        st.code(traceback.format_exc())
-        selected_stocks = pool[:3]
+    selected_stocks = st.multiselect("watchlist", pool, default=pool[:3],
+                                     label_visibility="collapsed")
 
-    # ── 4. Time range ─────────────────────────────────────────────────────────
     st.markdown('<div class="sb-label">Time Range</div>', unsafe_allow_html=True)
-    dbg("TIME_RANGES keys", list(TIME_RANGES.keys()))
-    try:
-        time_label = st.selectbox(
-            "timerange",
-            list(TIME_RANGES.keys()),
-            label_visibility="collapsed",
-        )
-        time_cfg = TIME_RANGES[time_label]
-        dbg("time_label", time_label, level="ok")
-        dbg("time_cfg", time_cfg)
-    except Exception as e:
-        dbg(f"Time range selectbox FAILED: {e}", level="err")
-        st.code(traceback.format_exc())
-        time_label = list(TIME_RANGES.keys())[0]
-        time_cfg   = TIME_RANGES[time_label]
+    time_label = st.selectbox("timerange", list(TIME_RANGES.keys()),
+                               label_visibility="collapsed")
+    time_cfg = TIME_RANGES[time_label]
 
     st.markdown('<hr class="sb-div">', unsafe_allow_html=True)
 
-    # ── 5. Chart options ──────────────────────────────────────────────────────
     st.markdown('<div class="sb-label">Chart Options</div>', unsafe_allow_html=True)
-    try:
-        show_indicators = st.toggle("Technical Indicators", value=True)
-        normalise       = st.toggle("Normalise Comparison",  value=False)
-        dbg("show_indicators", show_indicators, level="ok")
-        dbg("normalise",       normalise,       level="ok")
-    except Exception as e:
-        dbg(f"Chart option toggles FAILED: {e}", level="err")
-        st.code(traceback.format_exc())
-        show_indicators = True
-        normalise       = False
+    show_indicators = st.toggle("Technical Indicators", value=True)
+    normalise       = st.toggle("Normalise Comparison",  value=False)
 
     st.markdown('<hr class="sb-div">', unsafe_allow_html=True)
 
-    # ── 6. Live data / auto-refresh ───────────────────────────────────────────
     st.markdown('<div class="sb-label">Live Data</div>', unsafe_allow_html=True)
-    try:
-        auto_refresh = st.toggle("Auto Refresh", value=False)
-        dbg("auto_refresh", auto_refresh, level="ok")
-    except Exception as e:
-        dbg(f"Auto refresh toggle FAILED: {e}", level="err")
-        auto_refresh = False
-
+    auto_refresh = st.toggle("Auto Refresh", value=False)
     if auto_refresh:
         st.markdown(
             f'<div style="padding:2px 20px;font-size:0.68rem;color:#2d3748;'
@@ -342,16 +237,9 @@ with st.sidebar:
 
     st.markdown('<hr class="sb-div">', unsafe_allow_html=True)
 
-    # ── 7. Sign-out ───────────────────────────────────────────────────────────
-    try:
-        if st.button("Sign out"):
-            dbg("Sign out clicked — clearing session", level="warn")
-            st.session_state.logged_in = False
-            st.rerun()
-    except Exception as e:
-        dbg(f"Sign-out button FAILED: {e}", level="err")
-
-dbg("Sidebar block exited cleanly", level="ok")
+    if st.button("Sign out"):
+        st.session_state.logged_in = False
+        st.rerun()
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -359,10 +247,7 @@ dbg("Sidebar block exited cleanly", level="ok")
 # ═════════════════════════════════════════════════════════════════════════════
 if not selected_stocks:
     st.warning("Select at least one stock from the sidebar.")
-    dbg("No stocks selected — stopped", level="warn")
     st.stop()
-
-dbg(f"Proceeding with {len(selected_stocks)} stocks", selected_stocks)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -373,52 +258,21 @@ timestamp_slot = st.empty()
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# DATA FETCH
+# DATA — fetch once, reuse everywhere
 # ═════════════════════════════════════════════════════════════════════════════
-dbg("Calling get_stock_data()", selected_stocks)
-try:
-    df_snapshot = get_stock_data(tuple(selected_stocks))
-    dbg("get_stock_data() returned", f"shape={df_snapshot.shape}", level="ok")
-    dbg("df_snapshot columns", list(df_snapshot.columns))
-    if df_snapshot.empty:
-        dbg("df_snapshot is EMPTY", level="warn")
-except Exception as e:
-    dbg(f"get_stock_data() FAILED: {e}", level="err")
-    st.code(traceback.format_exc())
-    st.stop()
+df_snapshot = get_stock_data(tuple(selected_stocks))
 
 histories: dict = {}
 for ticker in selected_stocks:
-    dbg(f"Fetching history for {ticker}", f"period={time_cfg['period']} interval={time_cfg['interval']}")
-    try:
-        raw = get_history(ticker, time_cfg["period"], time_cfg["interval"])
-        if raw is None:
-            dbg(f"{ticker}: get_history() returned None", level="warn")
-            continue
-        if raw.empty:
-            dbg(f"{ticker}: history DataFrame is empty", level="warn")
-            continue
-        dbg(f"{ticker}: raw history shape", raw.shape, level="ok")
-        if show_indicators:
-            try:
-                processed = add_technical_indicators(raw)
-                dbg(f"{ticker}: indicators added, cols={list(processed.columns)}", level="ok")
-                histories[ticker] = processed
-            except Exception as e:
-                dbg(f"{ticker}: add_technical_indicators() FAILED: {e}", level="err")
-                st.code(traceback.format_exc())
-                histories[ticker] = raw          # fall back to raw
-        else:
-            histories[ticker] = raw
-    except Exception as e:
-        dbg(f"{ticker}: get_history() FAILED: {e}", level="err")
-        st.code(traceback.format_exc())
-
-dbg("histories populated", list(histories.keys()), level="ok")
+    raw = get_history(ticker, time_cfg["period"], time_cfg["interval"])
+    if raw is not None and not raw.empty:
+        histories[ticker] = (
+            add_technical_indicators(raw) if show_indicators else raw
+        )
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# TICKER CARDS
+# TICKER CARDS  (up to 6 per row)
 # ═════════════════════════════════════════════════════════════════════════════
 def _fmt_volume(v: float) -> str:
     if v >= 1_000_000_000: return f"{v/1_000_000_000:.2f}B"
@@ -426,39 +280,29 @@ def _fmt_volume(v: float) -> str:
     if v >= 1_000:         return f"{v/1_000:.0f}K"
     return f"{v:,.0f}"
 
-dbg("Rendering ticker cards", f"{len(df_snapshot)} rows")
-
-# Verify required columns exist before rendering cards
-REQUIRED_COLS = {"Ticker", "Price", "Change", "Change %", "High", "Low", "Volume"}
-missing = REQUIRED_COLS - set(df_snapshot.columns)
-if missing:
-    dbg(f"df_snapshot missing columns: {missing}", level="err")
-    st.error(f"Snapshot DataFrame is missing columns: `{missing}`")
-else:
-    if not df_snapshot.empty:
-        for chunk_start in range(0, len(df_snapshot), 6):
-            chunk = df_snapshot.iloc[chunk_start : chunk_start + 6]
-            cols  = st.columns(len(chunk))
-            for col, (_, row) in zip(cols, chunk.iterrows()):
-                up   = row["Change"] >= 0
-                sign = "+" if up else ""
-                with col:
-                    st.markdown(f"""
-                    <div class="ticker-card {'up' if up else 'down'}">
-                        <div class="tc-symbol">{row['Ticker']}</div>
-                        <div class="tc-price">${row['Price']:,.2f}</div>
-                        <div class="tc-change {'up' if up else 'down'}">
-                            {'▲' if up else '▼'} {sign}{row['Change']:.2f}
-                            <span style="opacity:.7">({sign}{row['Change %']:.2f}%)</span>
-                        </div>
-                        <div class="tc-meta">
-                            <span>H</span> ${row['High']:,.2f} &nbsp;
-                            <span>L</span> ${row['Low']:,.2f} &nbsp;
-                            <span>V</span> {_fmt_volume(row['Volume'])}
-                        </div>
+if not df_snapshot.empty:
+    for chunk_start in range(0, len(df_snapshot), 6):
+        chunk = df_snapshot.iloc[chunk_start : chunk_start + 6]
+        cols  = st.columns(len(chunk))
+        for col, (_, row) in zip(cols, chunk.iterrows()):
+            up   = row["Change"] >= 0
+            sign = "+" if up else ""
+            with col:
+                st.markdown(f"""
+                <div class="ticker-card {'up' if up else 'down'}">
+                    <div class="tc-symbol">{row['Ticker']}</div>
+                    <div class="tc-price">${row['Price']:,.2f}</div>
+                    <div class="tc-change {'up' if up else 'down'}">
+                        {'▲' if up else '▼'} {sign}{row['Change']:.2f}
+                        <span style="opacity:.7">({sign}{row['Change %']:.2f}%)</span>
                     </div>
-                    """, unsafe_allow_html=True)
-        dbg("Ticker cards rendered", level="ok")
+                    <div class="tc-meta">
+                        <span>H</span> ${row['High']:,.2f} &nbsp;
+                        <span>L</span> ${row['Low']:,.2f} &nbsp;
+                        <span>V</span> {_fmt_volume(row['Volume'])}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
 st.markdown("<div style='margin-top:10px'></div>", unsafe_allow_html=True)
 
@@ -466,11 +310,9 @@ st.markdown("<div style='margin-top:10px'></div>", unsafe_allow_html=True)
 # ═════════════════════════════════════════════════════════════════════════════
 # TABS
 # ═════════════════════════════════════════════════════════════════════════════
-CHART_CFG = {
-    "displayModeBar": True,
-    "modeBarButtonsToRemove": ["select2d", "lasso2d"],
-    "toImageButtonOptions": {"format": "png"},
-}
+CHART_CFG = {"displayModeBar": True,
+             "modeBarButtonsToRemove": ["select2d", "lasso2d"],
+             "toImageButtonOptions": {"format": "png"}}
 
 tab_compare, tab_candle, tab_heatmap, tab_table = st.tabs([
     "  Comparison  ", "  Candlestick  ", "  Heat Map  ", "  Data Table  "
@@ -478,93 +320,66 @@ tab_compare, tab_candle, tab_heatmap, tab_table = st.tabs([
 
 # ── Comparison ────────────────────────────────────────────────────────────────
 with tab_compare:
-    dbg("Rendering Comparison tab", f"histories={list(histories.keys())}")
     if histories:
-        try:
-            fig = make_comparison_chart(histories, normalised=normalise)
-            st.plotly_chart(fig, use_container_width=True, config=CHART_CFG)
-            dbg("Comparison chart rendered", level="ok")
-        except Exception as e:
-            dbg(f"make_comparison_chart() FAILED: {e}", level="err")
-            st.code(traceback.format_exc())
+        st.plotly_chart(
+            make_comparison_chart(histories, normalised=normalise),
+            use_container_width=True, config=CHART_CFG,
+        )
     else:
         st.warning("No history data — try a different time range or stock.")
 
 # ── Candlestick ───────────────────────────────────────────────────────────────
 with tab_candle:
-    dbg("Rendering Candlestick tab")
     if not histories:
         st.warning("No data available.")
     else:
         pick = st.selectbox("Ticker", list(histories.keys()),
                             key="candle_pick", label_visibility="collapsed")
-        dbg("candle pick", pick)
         df_pick = histories.get(pick)
 
         if df_pick is not None and not df_pick.empty:
-            try:
-                fig = make_candlestick_chart(df_pick, pick, indicators=show_indicators)
-                st.plotly_chart(fig, use_container_width=True, config=CHART_CFG)
-                dbg(f"Candlestick chart for {pick} rendered", level="ok")
-            except Exception as e:
-                dbg(f"make_candlestick_chart() FAILED: {e}", level="err")
-                st.code(traceback.format_exc())
-
+            st.plotly_chart(
+                make_candlestick_chart(df_pick, pick, indicators=show_indicators),
+                use_container_width=True, config=CHART_CFG,
+            )
             if show_indicators and "RSI" in df_pick.columns:
-                try:
-                    st.plotly_chart(
-                        make_rsi_chart(df_pick, pick),
-                        use_container_width=True,
-                        config={"displayModeBar": False},
-                    )
-                    dbg("RSI chart rendered", level="ok")
-                except Exception as e:
-                    dbg(f"make_rsi_chart() FAILED: {e}", level="err")
-                    st.code(traceback.format_exc())
-            elif show_indicators:
-                dbg(f"RSI column not found in df_pick for {pick}", level="warn")
+                st.plotly_chart(
+                    make_rsi_chart(df_pick, pick),
+                    use_container_width=True,
+                    config={"displayModeBar": False},
+                )
         else:
             st.warning(f"No data for {pick}.")
 
 # ── Heat Map ──────────────────────────────────────────────────────────────────
 with tab_heatmap:
-    dbg("Rendering Heat Map tab")
     if not df_snapshot.empty:
-        try:
-            fig = make_heatmap(df_snapshot)
-            st.plotly_chart(fig, use_container_width=True,
-                            config={"displayModeBar": False})
-            dbg("Heatmap rendered", level="ok")
-        except Exception as e:
-            dbg(f"make_heatmap() FAILED: {e}", level="err")
-            st.code(traceback.format_exc())
+        st.plotly_chart(
+            make_heatmap(df_snapshot),
+            use_container_width=True,
+            config={"displayModeBar": False},
+        )
     else:
         st.warning("No snapshot data available.")
 
 # ── Data Table ────────────────────────────────────────────────────────────────
 with tab_table:
-    dbg("Rendering Data Table tab")
     if not df_snapshot.empty:
-        try:
-            display = df_snapshot.copy()
-            display["Change %"] = display["Change %"].map(lambda x: f"{x:+.2f}%")
-            display["Change"]   = display["Change"].map(lambda x: f"{x:+.2f}")
-            display["Volume"]   = display["Volume"].map(lambda x: f"{x:,}")
-            st.dataframe(
-                display.set_index("Ticker"),
-                use_container_width=True,
-                height=min(420, 45 + 38 * len(display)),
-            )
-            st.download_button(
-                "⬇ Export CSV",
-                df_snapshot.to_csv(index=False),
-                file_name="stocks.csv",
-                mime="text/csv",
-            )
-            dbg("Data table rendered", level="ok")
-        except Exception as e:
-            dbg(f"Data table FAILED: {e}", level="err")
-            st.code(traceback.format_exc())
+        display = df_snapshot.copy()
+        display["Change %"] = display["Change %"].map(lambda x: f"{x:+.2f}%")
+        display["Change"]   = display["Change"].map(lambda x: f"{x:+.2f}")
+        display["Volume"]   = display["Volume"].map(lambda x: f"{x:,}")
+        st.dataframe(
+            display.set_index("Ticker"),
+            use_container_width=True,
+            height=min(420, 45 + 38 * len(display)),
+        )
+        st.download_button(
+            "⬇ Export CSV",
+            df_snapshot.to_csv(index=False),
+            file_name="stocks.csv",
+            mime="text/csv",
+        )
     else:
         st.warning("No data to display.")
 
@@ -577,9 +392,6 @@ timestamp_slot.caption(
 )
 
 if auto_refresh:
-    dbg(f"Auto-refresh sleeping {REFRESH_RATE}s then rerunning", level="warn")
     time.sleep(REFRESH_RATE)
     st.cache_data.clear()
     st.rerun()
-
-dbg("Full render cycle complete", level="ok")
