@@ -145,14 +145,6 @@ def make_comparison_chart(
         xaxis_title="Time",
         yaxis_title=y_title,
         hovermode="x unified",
-        legend=dict(
-            **_LAYOUT["legend"],
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-        ),
     )
 
     fig.update_xaxes(
