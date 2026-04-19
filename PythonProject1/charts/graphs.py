@@ -110,8 +110,8 @@ def make_comparison_chart(
             y = (close / close.iloc[0] * 100) if normalised else close
             all_y.append(y)
 
-                colour      = color_map.get(ticker, "#8b949e")
-            x           = _safe_index(df)
+            colour = color_map.get(ticker, "#8b949e")
+            x = _safe_index(df)
 
             fig.add_trace(go.Scatter(
                 x=x,
@@ -120,8 +120,7 @@ def make_comparison_chart(
                 name=ticker,
                 line=dict(color=colour, width=2),
                 fill="tozeroy",
-                fill_colour = colour + "1a",
-                fillcolor=fill_colour,
+                fillcolor=colour + "4d",
                 hovertemplate=(
                     f"<b>{ticker}</b><br>"
                     "%{x|%Y-%m-%d %H:%M}<br>"
@@ -308,6 +307,7 @@ def make_candlestick_chart(
         title="Price (USD)",
         range=_axis_range_with_padding(cl),
     )
+
     for i in range(1, rows + 1):
         fig.update_xaxes(showspikes=True, spikecolor="#444c56",
                          spikedash="dot", spikethickness=1, row=i, col=1)
@@ -339,8 +339,11 @@ def make_volume_chart(df: pd.DataFrame, ticker: str) -> go.Figure:
         **_LAYOUT,
         title=dict(text=f"{ticker} — Volume", font=dict(size=15)),
         xaxis_title="Time", yaxis_title="Volume",
-        yaxis=dict(**_LAYOUT["yaxis"], range=_axis_range_with_padding(vol, pad=0.1)),
         hovermode="x unified",
+    )
+    fig.update_yaxes(
+        **_LAYOUT["yaxis"],
+        range=_axis_range_with_padding(vol, pad=0.1),
     )
     return fig
 
@@ -367,20 +370,23 @@ def make_rsi_chart(df: pd.DataFrame, ticker: str) -> go.Figure:
     fig.add_trace(go.Scatter(
         x=x, y=rsi, mode="lines", name="RSI",
         line=dict(color=colour, width=2),
-        fill="tozeroy", fillcolor=colour + "18",
+        fill="tozeroy", fillcolor=colour + "4d",
         hovertemplate="%{x|%Y-%m-%d %H:%M}<br>RSI: %{y:.1f}<extra></extra>",
     ))
     fig.update_layout(
         **_LAYOUT,
         title=dict(text=f"{ticker} — RSI (14)", font=dict(size=15)),
         xaxis_title="Time", yaxis_title="RSI",
-        yaxis=dict(**_LAYOUT["yaxis"], range=[0, 100]),
         hovermode="x unified",
+    )
+    fig.update_yaxes(
+        **_LAYOUT["yaxis"],
+        range=[0, 100],
     )
     return fig
 
 
-# ── 5. Heatmap ────────────────────────────────────────────────────────────────
+# ── 5. Heatmap ─────��──────────────────────────────────────────────────────────
 
 def make_heatmap(df_snapshot: pd.DataFrame) -> go.Figure:
     if df_snapshot.empty:
@@ -404,9 +410,11 @@ def make_heatmap(df_snapshot: pd.DataFrame) -> go.Figure:
         **_LAYOUT,
         title=dict(text="Daily % Change", font=dict(size=16)),
         xaxis_title="Ticker", yaxis_title="Change (%)",
-        yaxis=dict(**_LAYOUT["yaxis"],
-                   range=[-(max_abs * 1.35), max_abs * 1.35],
-                   zeroline=True, zerolinecolor="#444c56"),
         hovermode="closest",
+    )
+    fig.update_yaxes(
+        **_LAYOUT["yaxis"],
+        range=[-(max_abs * 1.35), max_abs * 1.35],
+        zeroline=True, zerolinecolor="#444c56",
     )
     return fig
