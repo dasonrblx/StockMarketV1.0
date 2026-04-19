@@ -172,6 +172,29 @@ header    { visibility: hidden; }
 }
 [data-testid="stTabs"] [data-baseweb="tab-panel"] { padding-top: 20px !important; }
 
+/* ── Sidebar toggle button ── */
+div[data-testid="stSidebar"] {
+    transition: all 0.3s ease !important;
+}
+button[kind="secondary"]:has(+ *) { border: none; }
+[data-testid="stButton"]:has(button[key="sb_toggle"]) button,
+button#sb_toggle {
+    background: transparent !important;
+    border: 1px solid #1a2030 !important;
+    border-radius: 8px !important;
+    color: #58a6ff !important;
+    font-size: 1rem !important;
+    padding: 6px 10px !important;
+    width: 38px !important;
+    height: 38px !important;
+    margin-top: 6px !important;
+    transition: all 0.2s !important;
+}
+[data-testid="stButton"]:has(button[key="sb_toggle"]) button:hover {
+    background: rgba(88,166,255,0.08) !important;
+    border-color: #58a6ff !important;
+}
+
 /* ── Misc overrides ── */
 .stAlert { border-radius: 10px !important; font-size: 0.8rem !important; }
 [data-testid="stDataFrame"] { border-radius: 10px !important; overflow: hidden; }
@@ -269,102 +292,27 @@ if not selected_stocks:
 # ═════════════════════════════════════════════════════════════════════════════
 # HEADER
 # ═════════════════════════════════════════════════════════════════════════════
-st.markdown('<div class="dash-title">📈 Market Dashboard</div>', unsafe_allow_html=True)
+# ── Sidebar toggle button ─────────────────────────────────────────────────────
+if "sidebar_open" not in st.session_state:
+    st.session_state.sidebar_open = True
+
+col_title, col_btn = st.columns([11, 1])
+with col_title:
+    st.markdown('<div class="dash-title">📈 Market Dashboard</div>', unsafe_allow_html=True)
+with col_btn:
+    btn_label = "✕" if st.session_state.sidebar_open else "☰"
+    st.markdown(f"""
+    <style>
+    div[data-testid="stSidebar"] {{
+        display: {'block' if st.session_state.sidebar_open else 'none'} !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+    if st.button(btn_label, key="sb_toggle", help="Toggle sidebar"):
+        st.session_state.sidebar_open = not st.session_state.sidebar_open
+        st.rerun()
+
 timestamp_slot = st.empty()
-
-# ── Floating sidebar reopen button (JS-powered) ───────────────────────────────
-st.markdown("""
-<style>
-#sb-open-btn {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 0;
-    transform: translateY(-50%);
-    z-index: 9999999;
-    background: #0b0f14;
-    border: 1px solid #1a2030;
-    border-left: none;
-    border-radius: 0 8px 8px 0;
-    color: #58a6ff;
-    font-size: 16px;
-    padding: 12px 10px;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    line-height: 1;
-}
-#sb-open-btn:hover {
-    background: #0f1e2e;
-    color: #88c0ff;
-}
-</style>
-
-<button id="sb-open-btn" title="Open sidebar">&#9776;</button>
-
-<script>
-(function() {
-    function getSidebar() {
-        return document.querySelector('[data-testid="stSidebar"]');
-    }
-    function getNativeBtn() {
-        // Streamlit's built-in collapsed control arrow
-        return document.querySelector('[data-testid="collapsedControl"]');
-    }
-    function isCollapsed() {
-        var sb = getSidebar();
-        if (!sb) return false;
-        // Streamlit adds aria-expanded="false" when collapsed
-        return sb.getAttribute('aria-expanded') === 'false'
-            || sb.classList.contains('st-emotion-cache-collapsed')
-            || sb.style.transform && sb.style.transform.includes('-')
-            || window.getComputedStyle(sb).transform.includes('matrix')
-               && window.getComputedStyle(sb).width === '0px';
-    }
-    function checkState() {
-        var btn = document.getElementById('sb-open-btn');
-        if (!btn) return;
-        // Check if Streamlit's native collapsed control is visible
-        var native = getNativeBtn();
-        var nativeVisible = native && window.getComputedStyle(native).display !== 'none'
-                            && window.getComputedStyle(native).visibility !== 'hidden';
-        // Show our button only when native button is missing/invisible
-        if (nativeVisible) {
-            btn.style.display = 'none';
-        } else {
-            // Check sidebar width as the most reliable collapsed indicator
-            var sb = getSidebar();
-            if (sb) {
-                var w = sb.getBoundingClientRect().width;
-                btn.style.display = (w < 50) ? 'block' : 'none';
-            }
-        }
-    }
-    function openSidebar() {
-        // Try clicking Streamlit's native button first
-        var native = getNativeBtn();
-        if (native) { native.click(); return; }
-        // Fallback: click the collapse button inside sidebar (toggles it back)
-        var inner = document.querySelector('[data-testid="stSidebarCollapseButton"] button');
-        if (inner) { inner.click(); return; }
-        // Last resort: click anywhere on the sidebar
-        var sb = getSidebar();
-        if (sb) sb.click();
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        var btn = document.getElementById('sb-open-btn');
-        if (btn) btn.addEventListener('click', openSidebar);
-        setInterval(checkState, 300);
-    });
-    // Also run after a short delay in case Streamlit renders slowly
-    setTimeout(function() {
-        var btn = document.getElementById('sb-open-btn');
-        if (btn) btn.addEventListener('click', openSidebar);
-        setInterval(checkState, 300);
-    }, 800);
-})();
-</script>
-""", unsafe_allow_html=True)
 
 
 # ═════════════════════════════════════════════════════════════════════════════
