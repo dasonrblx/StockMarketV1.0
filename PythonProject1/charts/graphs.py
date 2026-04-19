@@ -90,6 +90,15 @@ def _yrange(s: pd.Series, pad: float = 0.05):
     return [lo - span * pad, hi + span * pad]
 
 
+def _rgba(hex_color: str, alpha: float = 0.12) -> str:
+    """Convert #rrggbb to rgba(r,g,b,alpha) — safe across all Plotly versions."""
+    h = hex_color.lstrip("#")
+    if len(h) != 6:
+        return f"rgba(139,148,158,{alpha})"
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"
+
+
 # ═════════════════════════════════════════════════════════════════════════════
 # CHART 1 — COMPARISON
 # ═════════════════════════════════════════════════════════════════════════════
@@ -113,7 +122,7 @@ def make_comparison_chart(histories: dict, normalised: bool = False) -> go.Figur
                 x=_index(df), y=y,
                 mode="lines", name=ticker,
                 line=dict(color=colour, width=2),
-                fill="tozeroy", fillcolor=colour + "1a",
+                fill="tozeroy", fillcolor=_rgba(colour, 0.10),
                 hovertemplate=(
                     f"<b>{ticker}</b><br>%{{x|%Y-%m-%d %H:%M}}<br>"
                     + ("Rebased: %{y:.2f}" if normalised else "Price: $%{y:,.2f}")
@@ -280,7 +289,7 @@ def make_rsi_chart(df: pd.DataFrame, ticker: str) -> go.Figure:
     fig.add_trace(go.Scatter(
         x=x, y=rsi, mode="lines", name="RSI",
         line=dict(color=colour, width=2),
-        fill="tozeroy", fillcolor=colour + "15",
+        fill="tozeroy", fillcolor=_rgba(colour, 0.08),
         hovertemplate="%{x|%Y-%m-%d %H:%M}<br>RSI: %{y:.1f}<extra></extra>",
     ))
     fig.update_layout(
