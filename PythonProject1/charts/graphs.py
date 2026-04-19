@@ -299,14 +299,15 @@ def make_candlestick_chart(
     fig.update_layout(
         **_LAYOUT,
         title=dict(text=f"{ticker} — Candlestick", font=dict(size=16)),
-        yaxis=dict(**_LAYOUT["yaxis"], title="Price (USD)",
-                   range=_axis_range_with_padding(cl)),
         xaxis_rangeslider_visible=False,
         hovermode="x unified",
-        legend=dict(**_LAYOUT["legend"], orientation="h",
-                    yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
 
+    fig.update_yaxes(
+        **_LAYOUT["yaxis"],
+        title="Price (USD)",
+        range=_axis_range_with_padding(cl),
+    )
     for i in range(1, rows + 1):
         fig.update_xaxes(showspikes=True, spikecolor="#444c56",
                          spikedash="dot", spikethickness=1, row=i, col=1)
