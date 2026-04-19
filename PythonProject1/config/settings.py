@@ -1,216 +1,91 @@
+import random
+import colorsys
+
 REFRESH_RATE = 30
 
-# ── 100+ Stocks organised by sector ──────────────────────────────────────────
-STOCKS = [
-    # Technology
-    "AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN", "TSLA", "AMD", "INTC", "QCOM",
-    "AVGO", "TXN", "MU", "AMAT", "KLAC", "LRCX", "SNPS", "CDNS", "MRVL", "NXPI",
-    "CRM", "ORCL", "SAP", "NOW", "ADBE", "INTU", "PANW", "CRWD", "ZS", "FTNT",
-    "SHOP", "UBER", "LYFT", "ABNB", "DASH", "RBLX", "SNAP", "PINS", "SPOT", "NFLX",
-    # Finance
-    "JPM", "BAC", "WFC", "GS", "MS", "C", "BLK", "SCHW", "AXP", "V",
-    "MA", "PYPL", "COF", "USB", "PNC", "TFC", "BK", "STT", "MTB", "CFG",
-    # Healthcare
-    "JNJ", "UNH", "PFE", "ABBV", "MRK", "LLY", "TMO", "ABT", "DHR", "BMY",
-    "AMGN", "GILD", "REGN", "VRTX", "BIIB", "ISRG", "SYK", "BSX", "MDT", "ZBH",
-    # Energy
-    "XOM", "CVX", "COP", "SLB", "EOG", "PXD", "MPC", "VLO", "PSX", "OXY",
-    # Consumer
-    "WMT", "HD", "MCD", "SBUX", "NKE", "TGT", "COST", "LOW", "TJX", "BKNG",
-    "PG", "KO", "PEP", "PM", "MO", "CL", "GIS", "K", "CPB", "HSY",
-    # Industrials
-    "BA", "CAT", "GE", "HON", "LMT", "RTX", "UPS", "FDX", "DE", "MMM",
-    # Futures (yfinance supported)
-    "NQ=F", "ES=F", "YM=F", "CL=F", "GC=F", "SI=F",
-    # Crypto
-    "BTC-USD", "ETH-USD",
-    # ETFs
-    "SPY", "QQQ", "DIA", "IWM", "VXX", "GLD", "SLV", "USO",
-]
-
-# ── Color map — every ticker gets a unique color ──────────────────────────────
-color_map = {
-    # ── Technology ──
-    "AAPL":    "#ff3b30",
-    "MSFT":    "#4da3ff",
-    "NVDA":    "#00ff88",
-    "GOOGL":   "#fbbc04",
-    "META":    "#0082fb",
-    "AMZN":    "#ff9900",
-    "TSLA":    "#ffcc00",
-    "AMD":     "#ed1c24",
-    "INTC":    "#0071c5",
-    "QCOM":    "#3253dc",
-    "AVGO":    "#cc0000",
-    "TXN":     "#e8a838",
-    "MU":      "#1abc9c",
-    "AMAT":    "#16a085",
-    "KLAC":    "#27ae60",
-    "LRCX":    "#2980b9",
-    "SNPS":    "#8e44ad",
-    "CDNS":    "#d35400",
-    "MRVL":    "#e74c3c",
-    "NXPI":    "#f39c12",
-    "CRM":     "#00a1e0",
-    "ORCL":    "#f80000",
-    "SAP":     "#0faaff",
-    "NOW":     "#81b5a1",
-    "ADBE":    "#ff0000",
-    "INTU":    "#365ebf",
-    "PANW":    "#fa5a28",
-    "CRWD":    "#fc0000",
-    "ZS":      "#005daa",
-    "FTNT":    "#ee3124",
-    "SHOP":    "#96bf48",
-    "UBER":    "#09091a",
-    "LYFT":    "#ff00bf",
-    "ABNB":    "#ff5a5f",
-    "DASH":    "#ff3008",
-    "RBLX":    "#e8192c",
-    "SNAP":    "#f7f700",
-    "PINS":    "#e60023",
-    "SPOT":    "#1db954",
-    "NFLX":    "#e50914",
-    # ── Finance ──
-    "JPM":     "#005eb8",
-    "BAC":     "#012169",
-    "WFC":     "#d71e28",
-    "GS":      "#7399c6",
-    "MS":      "#003087",
-    "C":       "#003b70",
-    "BLK":     "#44546a",
-    "SCHW":    "#00a0df",
-    "AXP":     "#007bc1",
-    "V":       "#1a1f71",
-    "MA":      "#eb001b",
-    "PYPL":    "#009cde",
-    "COF":     "#d03027",
-    "USB":     "#b10018",
-    "PNC":     "#f15a22",
-    "TFC":     "#7b2d8b",
-    "BK":      "#562881",
-    "STT":     "#005288",
-    "MTB":     "#1560bd",
-    "CFG":     "#006db7",
-    # ── Healthcare ──
-    "JNJ":     "#cc0000",
-    "UNH":     "#316bbf",
-    "PFE":     "#0093d0",
-    "ABBV":    "#071d49",
-    "MRK":     "#00857c",
-    "LLY":     "#d52b1e",
-    "TMO":     "#003594",
-    "ABT":     "#007dc1",
-    "DHR":     "#0063a3",
-    "BMY":     "#792f8a",
-    "AMGN":    "#006fba",
-    "GILD":    "#c2002f",
-    "REGN":    "#ff6600",
-    "VRTX":    "#00a19c",
-    "BIIB":    "#8c1515",
-    "ISRG":    "#1f5fa6",
-    "SYK":     "#f7941d",
-    "BSX":     "#00ae42",
-    "MDT":     "#009cde",
-    "ZBH":     "#1a4c8b",
-    # ── Energy ──
-    "XOM":     "#ff0000",
-    "CVX":     "#0072a6",
-    "COP":     "#e2231a",
-    "SLB":     "#009cde",
-    "EOG":     "#ff6319",
-    "PXD":     "#005daa",
-    "MPC":     "#c8102e",
-    "VLO":     "#002d72",
-    "PSX":     "#e87722",
-    "OXY":     "#d40000",
-    # ── Consumer ──
-    "WMT":     "#0071ce",
-    "HD":      "#f96302",
-    "MCD":     "#ffbc0d",
-    "SBUX":    "#00704a",
-    "NKE":     "#ff6600",
-    "TGT":     "#cc0000",
-    "COST":    "#005daa",
-    "LOW":     "#004990",
-    "TJX":     "#cc0000",
-    "BKNG":    "#003580",
-    "PG":      "#003087",
-    "KO":      "#f40009",
-    "PEP":     "#004b93",
-    "PM":      "#4a4a4a",
-    "MO":      "#8b0000",
-    "CL":      "#e31837",
-    "GIS":     "#004b87",
-    "K":       "#cc0000",
-    "CPB":     "#cc4400",
-    "HSY":     "#7b3f00",
-    # ── Industrials ──
-    "BA":      "#0033a0",
-    "CAT":     "#ffcd11",
-    "GE":      "#1a6496",
-    "HON":     "#e1261c",
-    "LMT":     "#003087",
-    "RTX":     "#cc0000",
-    "UPS":     "#7b3f00",
-    "FDX":     "#ff6600",
-    "DE":      "#367c2b",
-    "MMM":     "#ff0000",
-    # ── Futures ──
-    "NQ=F":    "#cc88ff",
-    "ES=F":    "#88ccff",
-    "YM=F":    "#ffaa44",
-    "CL=F":    "#ff6600",
-    "GC=F":    "#ffd700",
-    "SI=F":    "#c0c0c0",
-    # ── Crypto ──
-    "BTC-USD": "#f7931a",
-    "ETH-USD": "#627eea",
-    # ── ETFs ──
-    "SPY":     "#4da3ff",
-    "QQQ":     "#00d4aa",
-    "DIA":     "#ffd700",
-    "IWM":     "#ff8800",
-    "VXX":     "#ff4444",
-    "GLD":     "#daa520",
-    "SLV":     "#aaaaaa",
-    "USO":     "#cc6600",
-}
-
-# ── Sector groupings for sidebar filtering ────────────────────────────────────
+# ═════════════════════════════════════════════════════════════════════════════
+# SECTOR DEFINITIONS  (single source of truth — everything derives from this)
+# ═════════════════════════════════════════════════════════════════════════════
 SECTORS = {
-    "Technology":  ["AAPL","MSFT","NVDA","GOOGL","META","AMZN","TSLA","AMD","INTC","QCOM",
-                    "AVGO","TXN","MU","AMAT","KLAC","LRCX","SNPS","CDNS","MRVL","NXPI",
-                    "CRM","ORCL","SAP","NOW","ADBE","INTU","PANW","CRWD","ZS","FTNT",
-                    "SHOP","UBER","LYFT","ABNB","DASH","RBLX","SNAP","PINS","SPOT","NFLX"],
-    "Finance":     ["JPM","BAC","WFC","GS","MS","C","BLK","SCHW","AXP","V",
-                    "MA","PYPL","COF","USB","PNC","TFC","BK","STT","MTB","CFG"],
-    "Healthcare":  ["JNJ","UNH","PFE","ABBV","MRK","LLY","TMO","ABT","DHR","BMY",
-                    "AMGN","GILD","REGN","VRTX","BIIB","ISRG","SYK","BSX","MDT","ZBH"],
-    "Energy":      ["XOM","CVX","COP","SLB","EOG","PXD","MPC","VLO","PSX","OXY"],
-    "Consumer":    ["WMT","HD","MCD","SBUX","NKE","TGT","COST","LOW","TJX","BKNG",
-                    "PG","KO","PEP","PM","MO","CL","GIS","K","CPB","HSY"],
-    "Industrials": ["BA","CAT","GE","HON","LMT","RTX","UPS","FDX","DE","MMM"],
-    "Futures":     ["NQ=F","ES=F","YM=F","CL=F","GC=F","SI=F"],
-    "Crypto":      ["BTC-USD","ETH-USD"],
-    "ETFs":        ["SPY","QQQ","DIA","IWM","VXX","GLD","SLV","USO"],
+    "Technology":  [
+        "AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN", "TSLA", "AMD",  "INTC", "QCOM",
+        "AVGO", "TXN",  "MU",   "AMAT",  "KLAC", "LRCX", "SNPS", "CDNS", "MRVL", "NXPI",
+        "CRM",  "ORCL", "SAP",  "NOW",   "ADBE", "INTU", "PANW", "CRWD", "ZS",   "FTNT",
+        "SHOP", "UBER", "LYFT", "ABNB",  "DASH", "RBLX", "SNAP", "PINS", "SPOT", "NFLX",
+    ],
+    "Finance":     [
+        "JPM", "BAC", "WFC", "GS",   "MS",  "C",   "BLK",  "SCHW", "AXP", "V",
+        "MA",  "PYPL","COF", "USB",  "PNC", "TFC", "BK",   "STT",  "MTB", "CFG",
+    ],
+    "Healthcare":  [
+        "JNJ",  "UNH",  "PFE",  "ABBV", "MRK",  "LLY",  "TMO",  "ABT",  "DHR",  "BMY",
+        "AMGN", "GILD", "REGN", "VRTX", "BIIB", "ISRG", "SYK",  "BSX",  "MDT",  "ZBH",
+    ],
+    "Energy":      [
+        "XOM", "CVX", "COP", "SLB", "EOG", "PXD", "MPC", "VLO", "PSX", "OXY",
+    ],
+    "Consumer":    [
+        "WMT",  "HD",   "MCD",  "SBUX", "NKE", "TGT", "COST", "LOW", "TJX", "BKNG",
+        "PG",   "KO",   "PEP",  "PM",   "MO",  "CL",  "GIS",  "K",   "CPB", "HSY", "UL",
+    ],
+    "Industrials": [
+        "BA", "CAT", "GE", "HON", "LMT", "RTX", "UPS", "FDX", "DE", "MMM",
+    ],
+    "Futures":     ["NQ=F", "ES=F", "YM=F", "CL=F", "GC=F", "SI=F"],
+    "Crypto":      ["BTC-USD", "ETH-USD"],
+    "ETFs":        ["SPY", "QQQ", "DIA", "IWM", "VXX", "GLD", "SLV", "USO"],
 }
 
-# ── Time ranges — only yfinance-valid period/interval combos ─────────────────
-TIME_RANGES = {
-    "1 Day":     {"period": "1d",  "interval": "5m"},
-    "1 Week":    {"period": "5d",  "interval": "15m"},
-    "2 Weeks":   {"period": "10d", "interval": "30m"},
+# Flat list derived from sectors — no duplication
+STOCKS: list[str] = [ticker for sector in SECTORS.values() for ticker in sector]
 
-    "1 Month":   {"period": "1mo", "interval": "1h"},
-    "3 Months":  {"period": "3mo", "interval": "1d"},
-    "6 Months":  {"period": "6mo", "interval": "1d"},
 
-    "1 Year":    {"period": "1y",  "interval": "1d"},
-    "2 Years":   {"period": "2y",  "interval": "1d"},
-    "5 Years":   {"period": "5y",  "interval": "1wk"},
+# ═════════════════════════════════════════════════════════════════════════════
+# COLOR MAP  — generated once per process, visually distinct across all tickers
+# ═════════════════════════════════════════════════════════════════════════════
+def _generate_color_map(tickers: list[str], seed: int = 42) -> dict[str, str]:
+    """
+    Distribute tickers evenly around the hue wheel with controlled saturation
+    and lightness so every color is vivid and distinct on a dark background.
+    A fixed seed keeps colors stable across reruns.
+    """
+    rng   = random.Random(seed)
+    count = len(tickers)
 
-    "7 Years":   {"period": "7y",  "interval": "1wk"},
+    # Shuffle indices so adjacent tickers in the list aren't adjacent in hue
+    indices = list(range(count))
+    rng.shuffle(indices)
 
-    "10 Years":  {"period": "10y", "interval": "1mo"},
+    color_map: dict[str, str] = {}
+    for rank, ticker in enumerate(tickers):
+        hue        = indices[rank] / count          # evenly spaced, shuffled
+        saturation = rng.uniform(0.65, 0.95)        # always vivid
+        lightness  = rng.uniform(0.50, 0.72)        # bright enough on dark bg
+
+        r, g, b = colorsys.hls_to_rgb(hue, lightness, saturation)
+        color_map[ticker] = "#{:02x}{:02x}{:02x}".format(
+            int(r * 255), int(g * 255), int(b * 255)
+        )
+
+    return color_map
+
+
+color_map: dict[str, str] = _generate_color_map(STOCKS)
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# TIME RANGES  (yfinance-valid period / interval combos only)
+# ═════════════════════════════════════════════════════════════════════════════
+TIME_RANGES: dict[str, dict[str, str]] = {
+    "1 Day":    {"period": "1d",  "interval": "5m"},
+    "1 Week":   {"period": "5d",  "interval": "15m"},
+    "2 Weeks":  {"period": "10d", "interval": "30m"},
+    "1 Month":  {"period": "1mo", "interval": "1h"},
+    "3 Months": {"period": "3mo", "interval": "1d"},
+    "6 Months": {"period": "6mo", "interval": "1d"},
+    "1 Year":   {"period": "1y",  "interval": "1d"},
+    "2 Years":  {"period": "2y",  "interval": "1d"},
+    "5 Years":  {"period": "5y",  "interval": "1wk"},
+    "7 Years":  {"period": "7y",  "interval": "1wk"},
+    "10 Years": {"period": "10y", "interval": "1mo"},
 }
