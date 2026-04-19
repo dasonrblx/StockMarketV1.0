@@ -3,9 +3,6 @@ import colorsys
 
 REFRESH_RATE = 30
 
-# ═════════════════════════════════════════════════════════════════════════════
-# SECTOR DEFINITIONS  (single source of truth — everything derives from this)
-# ═════════════════════════════════════════════════════════════════════════════
 SECTORS = {
     "Technology":  [
         "AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN", "TSLA", "AMD",  "INTC", "QCOM",
@@ -40,9 +37,6 @@ SECTORS = {
 STOCKS: list[str] = [ticker for sector in SECTORS.values() for ticker in sector]
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# COLOR MAP  — generated once per process, visually distinct across all tickers
-# ═════════════════════════════════════════════════════════════════════════════
 def _generate_color_map(tickers: list[str], seed: int = 42) -> dict[str, str]:
     """
     Distribute tickers evenly around the hue wheel with controlled saturation
@@ -72,10 +66,6 @@ def _generate_color_map(tickers: list[str], seed: int = 42) -> dict[str, str]:
 
 color_map: dict[str, str] = _generate_color_map(STOCKS)
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# TIME RANGES  (yfinance-valid period / interval combos only)
-# ═════════════════════════════════════════════════════════════════════════════
 TIME_RANGES: dict[str, dict[str, str]] = {
     "1 Day":    {"period": "1d",  "interval": "5m"},
     "1 Week":   {"period": "5d",  "interval": "15m"},
