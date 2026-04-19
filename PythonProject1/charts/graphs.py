@@ -3,25 +3,13 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from config.settings import color_map
 
-# ── Constants ─────────────────────────────────────────────────────────────────
+# ── Colours ───────────────────────────────────────────────────────────────────
 UP_COLOR   = "#26a641"
 DOWN_COLOR = "#f85149"
 UP_WICK    = "#3fb950"
 DOWN_WICK  = "#ff7b72"
 
-# ── Base layout applied to every chart ───────────────────────────────────────
-BASE = dict(
-    template="plotly_dark",
-    paper_bgcolor="rgba(13,17,23,0.95)",
-    plot_bgcolor="rgba(13,17,23,0.0)",
-    font=dict(family="JetBrains Mono, monospace", size=12, color="#c9d1d9"),
-    hoverlabel=dict(bgcolor="#161b22", bordercolor="#30363d",
-                    font=dict(family="JetBrains Mono, monospace", size=12)),
-    legend=dict(bgcolor="rgba(22,27,34,0.85)", bordercolor="#30363d",
-                borderwidth=1, font=dict(size=11)),
-    margin=dict(l=50, r=30, t=55, b=45),
-)
-
+# ── Reusable axis style dicts ─────────────────────────────────────────────────
 XAXIS = dict(gridcolor="#21262d", linecolor="#30363d",
              showspikes=True, spikecolor="#444c56",
              spikedash="dot", spikethickness=1)
@@ -30,34 +18,46 @@ YAXIS = dict(gridcolor="#21262d", linecolor="#30363d",
              showspikes=True, spikecolor="#444c56",
              spikedash="dot", spikethickness=1)
 
+# ── Legend style (used explicitly per chart, NOT inside BASE) ─────────────────
+_LEGEND_H = dict(                          # horizontal — used in comparison & candle
+    bgcolor="rgba(22,27,34,0.85)", bordercolor="#30363d", borderwidth=1,
+    font=dict(size=11), orientation="h",
+    yanchor="bottom", y=1.02, xanchor="right", x=1,
+)
+_LEGEND_V = dict(                          # vertical — used in heatmap
+    bgcolor="rgba(22,27,34,0.85)", bordercolor="#30363d", borderwidth=1,
+    font=dict(size=11),
+)
+
+# ── Base layout — NO xaxis / yaxis / legend keys to avoid duplicate-key crash ─
+BASE = dict(
+    template="plotly_dark",
+    paper_bgcolor="rgba(13,17,23,0.95)",
+    plot_bgcolor="rgba(13,17,23,0.0)",
+    font=dict(family="JetBrains Mono, monospace", size=12, color="#c9d1d9"),
+    hoverlabel=dict(bgcolor="#161b22", bordercolor="#30363d",
+                    font=dict(family="JetBrains Mono, monospace", size=12)),
+    margin=dict(l=50, r=30, t=55, b=45),
+)
+
 
 # ═════════════════════════════════════════════════════════════════════════════
 # HELPERS
 # ═════════════════════════════════════════════════════════════════════════════
 
 def _col(df: pd.DataFrame, name: str) -> pd.Series:
-    """
-    Safely pull a column from a yfinance DataFrame.
-    yfinance can return multi-level columns like ("Close", "AAPL") —
-    this flattens that and always returns a plain 1-D float Series.
-    Returns an empty Series on failure.
-    """
+    """Pull a column safely from a (possibly multi-level) yfinance DataFrame."""
     try:
         s = df[name]
-        # Multi-level column? grab first sub-column
         if isinstance(s, pd.DataFrame):
             s = s.iloc[:, 0]
-        s = s.squeeze()
-        return s.astype(float)
+        return s.squeeze().astype(float)
     except Exception:
         return pd.Series(dtype=float)
 
 
-def _index(df: pd.DataFrame) -> pd.Index:
-    """
-    Return a timezone-free index Plotly can render.
-    Plotly crashes on tz-aware DatetimeIndex — strip it here.
-    """
+def _index(df: pd.DataFrame):
+    """Return a tz-naive, Plotly-safe DatetimeIndex."""
     try:
         idx = df.index
         if isinstance(idx, pd.MultiIndex):
@@ -70,10 +70,7 @@ def _index(df: pd.DataFrame) -> pd.Index:
 
 
 def _clip(s: pd.Series, factor: float = 5.0) -> pd.Series:
-    """
-    Clip extreme outliers using IQR so one bad tick doesn't blow the axis.
-    e.g. a corrupted $0 price or $999999 spike gets clamped to a sane range.
-    """
+    """Clip IQR-based outliers so one bad tick doesn't blow the axis."""
     if s.empty:
         return s
     q1, q3 = s.quantile(0.25), s.quantile(0.75)
@@ -84,7 +81,7 @@ def _clip(s: pd.Series, factor: float = 5.0) -> pd.Series:
 
 
 def _yrange(s: pd.Series, pad: float = 0.05):
-    """Return a padded [min, max] for a y-axis, or None if series is empty."""
+    """Padded [min, max] for a y-axis. Returns None if series is empty."""
     s = s.dropna()
     if s.empty:
         return None
@@ -94,15 +91,10 @@ def _yrange(s: pd.Series, pad: float = 0.05):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# CHART 1 — COMPARISON LINE CHART
+# CHART 1 — COMPARISON
 # ═════════════════════════════════════════════════════════════════════════════
 
 def make_comparison_chart(histories: dict, normalised: bool = False) -> go.Figure:
-    """
-    Overlaid line chart for all selected tickers.
-    normalised=True rebases every line to 100 at t=0 so you can compare
-    percentage moves regardless of absolute price differences.
-    """
     fig   = go.Figure()
     all_y = []
 
@@ -113,19 +105,15 @@ def make_comparison_chart(histories: dict, normalised: bool = False) -> go.Figur
             close = _clip(_col(df, "Close"))
             if close.empty or close.iloc[0] == 0:
                 continue
-
             y      = (close / close.iloc[0] * 100) if normalised else close
             colour = color_map.get(ticker, "#8b949e")
-            x      = _index(df)
             all_y.append(y)
 
             fig.add_trace(go.Scatter(
-                x=x, y=y,
-                mode="lines",
-                name=ticker,
+                x=_index(df), y=y,
+                mode="lines", name=ticker,
                 line=dict(color=colour, width=2),
-                fill="tozeroy",
-                fillcolor=colour + "1a",          # ~10% opacity fill
+                fill="tozeroy", fillcolor=colour + "1a",
                 hovertemplate=(
                     f"<b>{ticker}</b><br>%{{x|%Y-%m-%d %H:%M}}<br>"
                     + ("Rebased: %{y:.2f}" if normalised else "Price: $%{y:,.2f}")
@@ -135,13 +123,13 @@ def make_comparison_chart(histories: dict, normalised: bool = False) -> go.Figur
         except Exception:
             continue
 
-    # Compute a safe y-range across all traces
     y_range = _yrange(pd.concat(all_y)) if all_y else None
 
     fig.update_layout(
         **BASE,
         title=dict(text="Multi-Stock Comparison", font=dict(size=16)),
         hovermode="x unified",
+        legend=_LEGEND_H,
         xaxis=dict(
             **XAXIS,
             type="date",
@@ -163,61 +151,53 @@ def make_comparison_chart(histories: dict, normalised: bool = False) -> go.Figur
         yaxis=dict(**YAXIS,
                    title="Rebased (base=100)" if normalised else "Price (USD)",
                    range=y_range),
-        legend=dict(**BASE["legend"], orientation="h",
-                    yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
     return fig
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# CHART 2 — CANDLESTICK  (price + volume subplot + optional indicators)
+# CHART 2 — CANDLESTICK + VOLUME SUBPLOT
 # ═════════════════════════════════════════════════════════════════════════════
 
 def make_candlestick_chart(df: pd.DataFrame, ticker: str,
                            indicators: bool = True) -> go.Figure:
-    """
-    Single-ticker candlestick with:
-    - correct green/red body AND wick colours
-    - volume bars synced below (green up-day, red down-day)
-    - optional SMA-20, SMA-50, Bollinger Band overlay
-    - outlier-safe axes
-    """
     if df.empty:
         return go.Figure()
 
-    # Pull OHLCV — bail out cleanly if data is broken
-    op = _clip(_col(df, "Open"))
-    hi = _clip(_col(df, "High"))
-    lo = _clip(_col(df, "Low"))
-    cl = _clip(_col(df, "Close"))
+    try:
+        op = _clip(_col(df, "Open"))
+        hi = _clip(_col(df, "High"))
+        lo = _clip(_col(df, "Low"))
+        cl = _clip(_col(df, "Close"))
+    except Exception:
+        return go.Figure()
+
     if any(s.empty for s in [op, hi, lo, cl]):
         return go.Figure()
 
     x     = _index(df)
-    is_up = (cl >= op).values          # boolean array, one per candle
+    is_up = (cl >= op).values
 
-    # Volume is optional — futures & some tickers return 0
-    vol_raw   = _col(df, "Volume") if "Volume" in df.columns else pd.Series(dtype=float)
-    has_vol   = not vol_raw.empty and vol_raw.sum() > 0
+    vol_raw = _col(df, "Volume") if "Volume" in df.columns else pd.Series(dtype=float)
+    has_vol = not vol_raw.empty and vol_raw.sum() > 0
 
-    # Build subplot grid: price on top, volume below if available
     rows        = 2 if has_vol else 1
     row_heights = [0.72, 0.28] if has_vol else [1.0]
 
     fig = make_subplots(rows=rows, cols=1, shared_xaxes=True,
                         row_heights=row_heights, vertical_spacing=0.02)
 
-    # ── Candlestick ──────────────────────────────────────────────────────────
+    # Candlestick
     fig.add_trace(go.Candlestick(
         x=x, open=op, high=hi, low=lo, close=cl,
         name=ticker,
         increasing=dict(line=dict(color=UP_WICK,   width=1), fillcolor=UP_COLOR),
         decreasing=dict(line=dict(color=DOWN_WICK, width=1), fillcolor=DOWN_COLOR),
         whiskerwidth=0.3,
-        hoverinfo="x+y",               # keep it simple — avoids per-row format errors
+        hoverinfo="x+y",
     ), row=1, col=1)
 
-    # ── Indicator overlays ───────────────────────────────────────────────────
+    # Indicators
     if indicators:
         for col_name, label, colour, dash, lw in [
             ("SMA20",    "SMA 20",   "#388bfd", "solid", 1.5),
@@ -236,23 +216,20 @@ def make_candlestick_chart(df: pd.DataFrame, ticker: str,
                 hoverinfo="skip", showlegend=True,
             ), row=1, col=1)
 
-        # Shaded band between BB upper/lower
+        # Bollinger band fill
         if "BB_upper" in df.columns and "BB_lower" in df.columns:
             u = _col(df, "BB_upper")
             l = _col(df, "BB_lower")
             if not u.empty and not l.empty:
-                x_fwd = list(x)
-                x_rev = list(x)[::-1]
                 fig.add_trace(go.Scatter(
-                    x=x_fwd + x_rev,
+                    x=list(x) + list(x)[::-1],
                     y=list(u) + list(l)[::-1],
-                    fill="toself",
-                    fillcolor="rgba(88,166,255,0.06)",
+                    fill="toself", fillcolor="rgba(88,166,255,0.06)",
                     line=dict(color="rgba(0,0,0,0)"),
                     hoverinfo="skip", showlegend=False, name="BB Band",
                 ), row=1, col=1)
 
-    # ── Volume bars ──────────────────────────────────────────────────────────
+    # Volume
     if has_vol:
         vol = _clip(vol_raw, factor=6.0)
         fig.add_trace(go.Bar(
@@ -265,14 +242,12 @@ def make_candlestick_chart(df: pd.DataFrame, ticker: str,
         fig.update_yaxes(title_text="Volume", row=2, col=1,
                          gridcolor="#21262d", linecolor="#30363d")
 
-    # ── Layout ───────────────────────────────────────────────────────────────
     fig.update_layout(
         **BASE,
         title=dict(text=f"{ticker} — Candlestick", font=dict(size=16)),
         hovermode="x unified",
         xaxis_rangeslider_visible=False,
-        legend=dict(**BASE["legend"], orientation="h",
-                    yanchor="bottom", y=1.02, xanchor="right", x=1),
+        legend=_LEGEND_H,
     )
     fig.update_yaxes(title_text="Price (USD)", range=_yrange(cl),
                      row=1, col=1, **YAXIS)
@@ -287,23 +262,21 @@ def make_candlestick_chart(df: pd.DataFrame, ticker: str,
 # ═════════════════════════════════════════════════════════════════════════════
 
 def make_rsi_chart(df: pd.DataFrame, ticker: str) -> go.Figure:
-    """RSI(14) with overbought/oversold zones shaded."""
     if "RSI" not in df.columns:
         return go.Figure()
-
-    rsi    = _col(df, "RSI")
-    x      = _index(df)
-    colour = color_map.get(ticker, "#8b949e")
+    try:
+        rsi    = _col(df, "RSI")
+        x      = _index(df)
+        colour = color_map.get(ticker, "#8b949e")
+    except Exception:
+        return go.Figure()
 
     fig = go.Figure()
-    # Shaded zones
     fig.add_hrect(y0=70, y1=100, fillcolor="rgba(248,81,73,0.08)",  line_width=0)
     fig.add_hrect(y0=0,  y1=30,  fillcolor="rgba(38,166,65,0.08)",  line_width=0)
-    # Reference lines
     fig.add_hline(y=70, line_dash="dash", line_color=DOWN_COLOR, line_width=1, opacity=0.6)
     fig.add_hline(y=50, line_dash="dot",  line_color="#444c56",  line_width=1, opacity=0.4)
     fig.add_hline(y=30, line_dash="dash", line_color=UP_COLOR,   line_width=1, opacity=0.6)
-    # RSI line
     fig.add_trace(go.Scatter(
         x=x, y=rsi, mode="lines", name="RSI",
         line=dict(color=colour, width=2),
@@ -314,6 +287,7 @@ def make_rsi_chart(df: pd.DataFrame, ticker: str) -> go.Figure:
         **BASE,
         title=dict(text=f"{ticker} — RSI (14)", font=dict(size=15)),
         hovermode="x unified",
+        legend=_LEGEND_V,
         xaxis=dict(**XAXIS),
         yaxis=dict(**YAXIS, title="RSI", range=[0, 100]),
     )
@@ -321,11 +295,10 @@ def make_rsi_chart(df: pd.DataFrame, ticker: str) -> go.Figure:
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# CHART 4 — DAILY CHANGE HEATMAP (bar chart)
+# CHART 4 — DAILY CHANGE HEATMAP
 # ═════════════════════════════════════════════════════════════════════════════
 
 def make_heatmap(df_snapshot: pd.DataFrame) -> go.Figure:
-    """Sorted bar chart showing daily % change for all watchlist stocks."""
     if df_snapshot.empty:
         return go.Figure()
 
@@ -347,6 +320,7 @@ def make_heatmap(df_snapshot: pd.DataFrame) -> go.Figure:
         **BASE,
         title=dict(text="Daily % Change", font=dict(size=16)),
         hovermode="closest",
+        legend=_LEGEND_V,
         xaxis=dict(**XAXIS, title="Ticker"),
         yaxis=dict(**YAXIS, title="Change (%)",
                    range=[-(max_abs * 1.4), max_abs * 1.4],
