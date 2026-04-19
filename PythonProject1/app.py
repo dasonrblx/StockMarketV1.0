@@ -31,37 +31,14 @@ st.markdown("""
 
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color: #080c10; }
 
-/* Hide Streamlit chrome */
+/* Hide Streamlit chrome completely */
 #MainMenu { visibility: hidden; }
 footer    { visibility: hidden; }
-
-/* Hide header content but NOT the sidebar toggle buttons */
 header    { visibility: hidden; }
 
-/* Sidebar collapse button (inside sidebar — the X / arrow-left) */
-[data-testid="stSidebarCollapseButton"] {
-    visibility: visible !important;
-    display:    flex    !important;
-    opacity:    1       !important;
-    pointer-events: all !important;
-}
-
-/* Collapsed control — the > arrow that reopens the sidebar */
-[data-testid="collapsedControl"] {
-    visibility:     visible !important;
-    display:        flex    !important;
-    opacity:        1       !important;
-    pointer-events: all     !important;
-    position:       fixed   !important;
-    top:            50%     !important;
-    left:           0       !important;
-    z-index:        999999  !important;
-    background:     #0b0f14 !important;
-    border:         1px solid #1a2030 !important;
-    border-left:    none    !important;
-    border-radius:  0 6px 6px 0 !important;
-    padding:        8px 6px !important;
-}
+/* Lock sidebar permanently open — hide all collapse/expand controls */
+[data-testid="stSidebarCollapseButton"] { display: none !important; }
+[data-testid="collapsedControl"]        { display: none !important; }
 
 .block-container { padding: 2rem 2.5rem !important; }
 
@@ -270,7 +247,7 @@ if not selected_stocks:
 # HEADER
 # ═════════════════════════════════════════════════════════════════════════════
 st.markdown('<div class="dash-title">📈 Market Dashboard</div>', unsafe_allow_html=True)
-timestamp_slot = st.empty()   # filled at the bottom once everything is loaded
+timestamp_slot = st.empty()
 
 
 # ═════════════════════════════════════════════════════════════════════════════
